@@ -13,6 +13,6 @@ list: kubeconfig
 
 apply: kubeconfig
 	kubectl apply -f bundle.yaml -f prometheus-rbac.yaml -f prometheus-service.yaml   --kubeconfig ${kubeconfig_dir}/prometheus-operator
-	kubectl apply -f prometheus.yaml -f service-monitor.yaml -f pod-monitor.yaml
+	kubectl apply -f prometheus.yaml -f service-monitor.yaml -f pod-monitor.yaml --kubeconfig ${kubeconfig_dir}/prometheus-operator
 destroy: kubeconfig
 	 kubectl delete -f pod-monitor.yaml -f service-monitor.yaml -f prometheus.yaml -f prometheus-service.yaml -f prometheus-rbac.yaml -f bundle.yaml --kubeconfig ${kubeconfig_dir}/prometheus-operator
