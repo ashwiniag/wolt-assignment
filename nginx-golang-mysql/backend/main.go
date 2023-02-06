@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +15,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	_ "k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/rest"
 )
+
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
 
 func connect() (*sql.DB, error) {
 	start := time.Now()
@@ -23,11 +33,21 @@ func connect() (*sql.DB, error) {
 		dbConnectTime.With(prometheus.Labels{"host": "db"}).Observe(time.Since(start).Seconds())
 	}()
 
-	bin, err := ioutil.ReadFile("/run/secrets/db-password")
-	if err != nil {
-		return nil, err
+	DB_PASSWORD := getEnv("DB_PASSWORD", "db-q5n2g")
+	DB_HOST := getEnv("DB_HOST", "db")
+	DB_PORT := getEnv("DB_PORT", "3306")
+
+	if DB_PASSWORD == "" || DB_HOST == "" || DB_PORT == "" {
+		return nil, fmt.Errorf("DB_PASSWORD, DB_PORT and DB_HOST variables must be passed")
 	}
-	db, err := sql.Open("mysql", fmt.Sprintf("root:%s@tcp(db:3306)/example", string(bin)))
+
+	//bin, err := ioutil.ReadFile("/run/secrets/db-password")
+	//if err != nil {
+	//	log.Printf("error reading file: %v", err)
+	//	return nil, err
+	//}
+
+	db, err := sql.Open("mysql", fmt.Sprintf("root:%s@tcp(%s:%s)/example", DB_PASSWORD, DB_HOST, DB_PORT ))
 	if err != nil {
 		dbConnectSuccess.With(prometheus.Labels{"host": "db", "status": "failure"}).Set(0)
 		return nil, err
@@ -69,6 +89,11 @@ func blogHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var title string
 		err = rows.Scan(&title)
+		if err != nil {
+			w.WriteHeader(500)
+			log.Printf("error scanning row: %v", err)
+			return
+		}
 		titles = append(titles, title)
 	}
 	BlogCount.Set(float64(len(titles)))
@@ -91,8 +116,8 @@ func main() {
 
 	log.Print("Listening 8000")
 	r := mux.NewRouter()
-	r.HandleFunc("/", blogHandler)
-	r.Handle("/metrics", promhttp.Handler())
+	r.HandleFunc("/backend", blogHandler)
+	r.Handle("/backend_metrics", promhttp.Handler())
 	log.Fatal(http.ListenAndServe(":8000", handlers.LoggingHandler(os.Stdout, r)))
 }
 
