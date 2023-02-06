@@ -60,13 +60,7 @@ function all_layers() {
 
 	cd $current_dir/alice-team/setup_metrics/prometheus-operator
 	make kubeconfig
-	set -e
 	make apply
-	if [ $? != 0 ]; then
-	    make apply
-	fi
-
-
 }
 
 function delete_all_provisioned() {
@@ -91,6 +85,7 @@ function delete_all_provisioned() {
 	echo yes | make destroy
 
 	cd $current_dir/tfstate_setup/
+	aws s3api delete-objects --bucket wolt-assignment-alice-team --delete "$(aws s3api list-object-versions --bucket "wolt-assignment-alice-team" --output=json --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}')" > /dev/null
 	terraform destroy -auto-approve
 
 }
