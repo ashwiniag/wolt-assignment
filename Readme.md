@@ -115,7 +115,9 @@ docker run -d -p 3000:3000 grafana/grafana-oss:latest
 ```  
 get lb name (local testing)  
 ```
- kubectl get svc -n default 
+
+kubectl get svc -n default -o json | jq '.items[].status.loadBalancer.ingress[0].hostname' | head -n 1
+
  ``` 
   
 Endpoints:  
