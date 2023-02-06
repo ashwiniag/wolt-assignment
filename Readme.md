@@ -96,13 +96,9 @@ The Go application is instrumented with [Prometheus](https://prometheus.io/docs/
 5. `wolt_db_query_success`: Indicates the success or failure of retrieving blog post titles from the database.  
 6. `wolt_db_query_time`: Measures the time taken to retrieve blog post titles from the database.  
 7. `wolt_json_encode_time`: Records the time taken to encode the blog post titles into JSON.  
-8. `wolt_blog_count`: Counts the number of blog posts stored in the database.  
-  
-Instruction on running Grafana and add the endpoint to query from.  
-Note: For now logs are printed at stdout    
-     
+8. `wolt_blog_count`: Counts the number of blog posts stored in the database.     
     
-### Discussion notes  
+### Thoughst and usage on these metrics  
 - `wolt_db_connect_success`:  Lets say it's value is `false` more than 3 times in last 5min window, then alert it. This can give the patterns in the connection's stability, which will effect application performance leading to not good user experience. We can further investigate if db reached its resource crunch, what is the max connection / concurrent connection a db can handle etc to improve the performance.
 - `wolt_db_connect_time:` it  indicate that the average connection time is consistent and within acceptable connection window time set.  If a large number of connections are falling into a high time bucket [ lets say more than 2 secs], it could indicate that the average connection time is much higher than desired and that the performance of the database connection is not up to the mark. User will be experiencing a slow application. //* where can we look should be written?
 - `wolt_db_query_success`:  Allows to track the success or failure of query, which can help to identify and troubleshoot issues with  database interactions more effectively, here we have just one query, as of now may be with feature this can be optimised to measure performance of queries .Let’s say if the success rate of this query in last 5 min fails below 3 then, one could hop early and debug - in the lines of” Performance issues (If the database is experiencing high load or resource constraints. Then hop onto kubernetes metrics of pods - CPU, men etc), Incorrect data type ( If the query is trying to access data that does not match the specified data type, in this case check for **ERROR** logs .)
@@ -112,6 +108,19 @@ Note: For now logs are printed at stdout
 These are few custom metrics to begin with in understanding user experience and how it is impacting them to take an action based on priority. 
 - `wolt_http_requests_total`: The total number of HTTP requests processed.  A counter value meaning it will work in incremented value. 
 - `wolt_http_response_time_seconds`: The time it takes to process an HTTP request in seconds. Can be used to observe what endpoints are taking two much time to serve?
+  
+Note: For now logs are printed at stdout 
+
+Instruction on running Grafana:
+Run conatiner locally
+cmd: docker run -d -p 3000:3000 grafana/grafana-oss:latest
+get lb name (local testing)
+cmd: kubectl get svc -n default
+
+Endpoints:
+- VictoriMametrics: http://<lb>/api/v1/write
+- Application serves: http:<lb>/backend
+- Application's metrics: http:<lb>/backend_metrics
 
 ###  Room for improvements  
 There is scope of improvements as this the first draft. 
