@@ -1,12 +1,12 @@
 ## Context   
-This document outlines the architecture setup of Alice Temas' project which deploys the instrumented code, discusses the emitted custom metrics to understand meaningful events of users. Provides the tech stack to provision and sending metrics of application and cluster to metrics storage.  All keeping in mind the scope of the application. It also delves into the idea of what could be improved, since this is the first draft.   
+This document outlines the architecture setup of Alice Temas' project which deploys the instrumented code, discusses the emitted custom metrics to understand meaningful events of users. Provides the tech stack to provision and send metrics of application and cluster to a tsdb storage.  All keeping in mind the scope of the application. It also delves into the idea of what could be improved.   
     
 ## Goals 
 
 The goal of the project is to instrument the project A from Alice team to capture insightful events of the application
 - Deploys the project in a Kubernetes environment.   
-- Provision a AWS cloud-based architecture and providing metrics storage Terraform. 
-- Identify key metrics to be observed and Instruments the applications. 
+- Provisions architecture on AWS cloud  and provides metrics storage, using Terraform. 
+- Identifys key metrics to be observed and Instruments the [applications](https://github.com/docker/awesome-compose/tree/master/nginx-golang-mysql). 
 - Share ideas on what could be observed.  
 - Provides simple bash scripts to deploy the stack. 
     
@@ -18,8 +18,16 @@ The goal of the project is to instrument the project A from Alice team to captur
     
 ## Background 
 
-- Share some knowledge on what metrics are, logs are. How can they be useful . what are counts and gauge basically metrics unit    
-- For the fun of it I took liberty to explore prometheus operator and implemented it. 
+- Instruments Go application using  [Prometheus Go client](https://github.com/prometheus/client_golang). It  provides:
+	-   Built-in Go metrics (memory usage, goroutines, GC, …)
+	-   The ability to create custom metrics
+	-   An HTTP handler for the  metrics  endpoint
+	-  More on usage: https://prometheus.io/docs/guides/go-application/
+
+- Uses [VictoriaMetrics](https://docs.victoriametrics.com) as tsdb storage.
+
+- For the fun of it I took liberty to explore [prometheus operator](https://github.com/prometheus-operator/prometheus-operator) and implemented it. Which remotes write into Victoriamterics endpoint, and gives capabilities of adding custom metrics. 
+
     
 ## Glossary
 
@@ -68,7 +76,9 @@ Docker image is build locally and upload in ECR.
   
 ### Provisioning: How to use the scripts to implement. 
 
-`provisioning_script.sh`: A simple bash scripts that build docker image and uploads on ECR, provisions necessary aws resources like VPC, subnets and managed eks cluster, and deploys k8s services.   
+`provisioning_script.sh`: A simple bash scripts that build docker image and uploads on ECR, provisions necessary aws resources like VPC, subnets and managed eks cluster, and deploys k8s services.   This script isn't idempotent for now. 
+usage: ./provisioning_script.sh apply|delete
+Before executing bash please export AWS_PROFILE=<>
   
   
 ### Metrics & Logging 
