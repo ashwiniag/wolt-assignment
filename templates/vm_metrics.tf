@@ -7,8 +7,6 @@ locals {
 
 variable "env" {}
 
-//variable namespace {}
-
 variable "cluster" {}
 
 variable "victoriametrics" {
