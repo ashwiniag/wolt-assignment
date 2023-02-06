@@ -1,5 +1,7 @@
 
-## Context This document outlines the architecture setup of Alice Temas' project which deploys the instrumented code, discusses the emitted custom metrics to understand meaningful events of users. Provides the tech stack to provision and send metrics of application and cluster to a tsdb storage.  All keeping in mind the scope of the application. It also delves into the idea of what could be improved.     
+## Context 
+
+This document outlines the architecture setup of Alice Temas' project which deploys the instrumented code, discusses the emitted custom metrics to understand meaningful events of users. Provides the tech stack to provision and send metrics of application and cluster to a tsdb storage.  All keeping in mind the scope of the application. It also delves into the idea of what could be improved.     
       
 ## Goals   
 The goal of the project is to instrument the project A from Alice team to capture insightful events of the application  
