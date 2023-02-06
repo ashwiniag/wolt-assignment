@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: prometheus-operator-services
+  labels:
+    app: prometheus-operator-services
+    release: prometheus
+    enabled: "true"
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchExpressions:
+# custom labels maybe like wolt = true key for all, test it
+    - {key: wolt, operator: Exists}
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 30s
+      path: /backend_metrics

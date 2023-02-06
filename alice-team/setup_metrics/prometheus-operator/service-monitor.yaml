@@ -1,0 +1,90 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prometheus-self
+  labels:
+    app: prometheus
+    enabled: "true"
+spec:
+  endpoints:
+  - interval: 30s
+    port: web
+  selector:
+    matchLabels:
+      app: prometheus
+---
+#pod monitor should suffice - test
+#apiVersion: monitoring.coreos.com/v1
+#kind: ServiceMonitor
+#metadata:
+#  name: backend
+#  labels:
+#    app: backend
+#    enabled: "true"
+#spec:
+#  endpoints:
+#    - interval: 30s
+#      port: metrics
+#      path: /backend_metrics
+#  selector:
+#    matchLabels:
+#      app: backend
+#      wolt: "true"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    enabled: "true"
+spec:
+  namespaceSelector:
+    any: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  endpoints:
+  - interval: 30s
+    port: http-metrics
+    metricRelabelings:
+    - sourceLabels: [__name__, exported_container]
+      regex: ".*;(.+)"
+      targetLabel: container
+    - sourceLabels: [__name__, exported_namespace]
+      regex: ".*;(.+)"
+      targetLabel: namespace
+    - sourceLabels: [__name__, exported_pod]
+      regex: ".*;(.+)"
+      targetLabel: pod
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kubelet
+  labels:
+    k8s-app: kubelet
+    enabled: "true"
+spec:
+  jobLabel: k8s-app
+  endpoints:
+  - port: https-metrics
+    scheme: https
+    interval: 30s
+    tlsConfig:
+      insecureSkipVerify: true
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  - port: https-metrics
+    scheme: https
+    path: /metrics/cadvisor
+    interval: 30s
+    honorLabels: true
+    tlsConfig:
+      insecureSkipVerify: true
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+  selector:
+    matchLabels:
+      k8s-app: kubelet
+  namespaceSelector:
+    matchNames:
+    - kube-system

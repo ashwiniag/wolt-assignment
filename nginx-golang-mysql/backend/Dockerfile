@@ -7,6 +7,9 @@ ENV CGO_ENABLED 0
 ENV GOPATH /go
 ENV GOCACHE /go-build
 
+ENV DB_HOST=""
+ENV DB_PASSWORD=""
+
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
     go mod download
@@ -15,7 +18,7 @@ COPY . .
 
 RUN --mount=type=cache,target=/go/pkg/mod/cache \
     --mount=type=cache,target=/go-build \
-    go build -o bin/backend main.go
+    go build -o bin/backend main.go metrics.go
 
 CMD ["/code/bin/backend"]
 
@@ -39,3 +42,4 @@ CMD ["go", "run", "main.go"]
 FROM scratch
 COPY --from=builder /code/bin/backend /usr/local/bin/backend
 CMD ["/usr/local/bin/backend"]
+
