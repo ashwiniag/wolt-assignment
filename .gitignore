@@ -15,3 +15,14 @@
 # vendor/
 victoria*/*
 ../Notes
+
+**/.idea/
+.terraform/
+*.tgz
+*.lock.latest
+**/.terraform.lock.hcl
+
+alice-team/*/.terraform*
+alice-team/*/terraform.tfstate*
+tfstate_setup/.terraform*
+tfstate_setup/terraform.tf*
