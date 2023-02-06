@@ -32,6 +32,7 @@ The goal of the project is to instrument the project A from Alice team to captur
 ## Glossary
 
  - Directory structure:
+ ```
 ├── alice-team
 │   ├── infra // tf. files for basic aws infra like vpc, subnets etc
 │   ├── resources // .tf files for nodes, ssm for being curious whats happening.
@@ -45,6 +46,7 @@ The goal of the project is to instrument the project A from Alice team to captur
 │   └── proxy
 ├── templates // .tf files which will be applied using Makefile 
 └── tfstate_setup // Configures s3 backend to store terraform statefiles  
+```
     
 ## Details     
   
