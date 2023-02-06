@@ -38,6 +38,7 @@ func connect() (*sql.DB, error) {
 	DB_PORT := getEnv("DB_PORT", "3306")
 
 	if DB_PASSWORD == "" || DB_HOST == "" || DB_PORT == "" {
+		log.Println("ERROR: Missing required environment variables: DB_PASSWORD, DB_HOST, DB_PORT")
 		return nil, fmt.Errorf("DB_PASSWORD, DB_PORT and DB_HOST variables must be passed")
 	}
 
@@ -49,10 +50,12 @@ func connect() (*sql.DB, error) {
 
 	db, err := sql.Open("mysql", fmt.Sprintf("root:%s@tcp(%s:%s)/example", DB_PASSWORD, DB_HOST, DB_PORT ))
 	if err != nil {
+		log.Printf("ERROR: Check connection string, failed to connect to the database: %v", err)
 		dbConnectSuccess.With(prometheus.Labels{"host": "db", "status": "failure"}).Set(0)
 		return nil, err
 	}
 	dbConnectSuccess.With(prometheus.Labels{"host": "db", "status": "success"}).Set(1)
+	log.Println("INFO: Successfully connected to the database")
 	return db, nil
 }
 
@@ -78,6 +81,7 @@ func blogHandler(w http.ResponseWriter, r *http.Request) {
 	queryStart := time.Now()
 	rows, err := db.Query("SELECT title FROM blog")
 	if err != nil {
+		log.Printf("ERROR: Failed to query from database,: %v", err)
 		dbQuerySuccess.With(prometheus.Labels{"host": "db", "status": "failure"}).Set(0)
 		w.WriteHeader(500)
 		return
@@ -91,7 +95,7 @@ func blogHandler(w http.ResponseWriter, r *http.Request) {
 		err = rows.Scan(&title)
 		if err != nil {
 			w.WriteHeader(500)
-			log.Printf("error scanning row: %v", err)
+			log.Printf("ERROR: Failed scanning row,: %v", err)
 			return
 		}
 		titles = append(titles, title)
@@ -124,6 +128,7 @@ func main() {
 func prepare() error {
 	db, err := connect()
 	if err != nil {
+		log.Printf("ERROR: preparing the db, is the connection string fine?,: %v", err)
 		return err
 	}
 	defer db.Close()
