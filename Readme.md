@@ -30,9 +30,12 @@ The goal of the project is to instrument the project A from Alice team to captur
       
 ## Glossary  
   
-  
  - Directory structure:  
+ 
+ Based on its deployment frequencies and atomicity.
+ 
 ```
+
 .
 ├── alice-team  
 │   ├── infra // tf. files for basic aws infra like vpc, subnets etc  
@@ -45,6 +48,7 @@ The goal of the project is to instrument the project A from Alice team to captur
 │   ├── db  
 │   └── proxy  
 ├── templates // .tf files which will be applied using Makefile └── tfstate_setup // Configures s3 backend to store terraform statefiles 
+
 
 ```
 
@@ -71,7 +75,7 @@ Docker image is build locally and upload in ECR.
     
     
 ### Provisioning: How to use the scripts to implement.   
-`provisioning_script.sh`: A simple bash scripts that build docker image and uploads on ECR, provisions necessary aws resources like VPC, subnets and managed eks cluster, and deploys k8s services.   This script isn't idempotent for now.   
+`provisioning_script.sh`: A simple bash scripts that build docker image and uploads on ECR, provisions necessary aws resources like VPC, subnets and managed eks cluster, and deploys k8s services.   This script isn't *idempotent* for now.   
 usage: ./provisioning_script.sh apply|delete  
 Before executing bash please export AWS_PROFILE=<>  
     
