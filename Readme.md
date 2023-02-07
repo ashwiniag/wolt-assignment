@@ -1,7 +1,7 @@
 
 ## Context 
 
-This document outlines the architecture setup of Alice Temas' project which deploys the instrumented code, discusses the emitted custom metrics to understand meaningful events of users. Provides the tech stack to provision and send metrics of application and cluster to a tsdb storage.  All keeping in mind the scope of the application. It also delves into the idea of what could be improved.     
+This document outlines the architecture setup of Alice Temas' project which deploys the instrumented code, discusses the emitted custom metrics to understand meaningful events of users. Provides the tech stack to provision and send metrics of application and kubernetes cluster to a tsdb storage.  All keeping in mind the scope of the application. It also delves into the idea of what could be improved.     
       
 ## Goals   
 The goal of the project is to instrument the project A from Alice team to capture insightful events of the application  
@@ -25,7 +25,7 @@ The goal of the project is to instrument the project A from Alice team to captur
   
 - Uses [VictoriaMetrics](https://docs.victoriametrics.com) as tsdb storage.  
   
-- For the fun of it I took liberty to explore [prometheus operator](https://github.com/prometheus-operator/prometheus-operator) and implemented it. Which remotes write into Victoriamterics endpoint, and gives capabilities of adding custom metrics.   
+- For the fun of it I took liberty to explore [prometheus operator](https://github.com/prometheus-operator/prometheus-operator) and implemented it. Which remotes write into Victoriamterics endpoint, and we can also leverage this by adding custom labels to metrics.   
   
       
 ## Glossary  
@@ -41,13 +41,15 @@ The goal of the project is to instrument the project A from Alice team to captur
 │   ├── infra // tf. files for basic aws infra like vpc, subnets etc  
 │   ├── resources // .tf files for nodes, ssm for being curious whats happening.  
 │   ├── services_k8s // .tf files for backend, db etc  
-│   └── setup_metrics // For sending cluster and application metrics │       ├── kube-state-metrics-configs  
+│   └── setup_metrics // exposing metrics and remote_writing to VictoriaMetric endpoint       
+        ├── kube-state-metrics-configs  
 │       └── prometheus-operator  
 ├── nginx-golang-mysql // Application that serves  
 │   ├── backend  
 │   ├── db  
 │   └── proxy  
-├── templates // .tf files which will be applied using Makefile └── tfstate_setup // Configures s3 backend to store terraform statefiles 
+├── templates // .tf files which will be applied using Makefile 
+└── tfstate_setup // Configures s3+dynamodeb backend to store terraform statefiles and takes care of state locks
 
 
 ```
@@ -75,7 +77,7 @@ Docker image is build locally and upload in ECR.
     
     
 ### Provisioning: How to use the scripts to implement.   
-`provisioning_script.sh`: A simple bash scripts that build docker image and uploads on ECR, provisions necessary aws resources like VPC, subnets and managed eks cluster, and deploys k8s services.   This script isn't *idempotent* for now.   
+`provisioning_script.sh`: A simple bash scripts that build docker image and uploads on ECR, provisions necessary aws resources like VPC, subnets and managed eks cluster, and deploys k8s services. This is a quick script for local testing purpose.   
 usage: ./provisioning_script.sh apply|delete  
 Before executing bash please export AWS_PROFILE=<>  
     
@@ -119,17 +121,20 @@ get lb name (local testing)
 kubectl get svc -n default -o json | jq '.items[].status.loadBalancer.ingress[0].hostname' | head -n 1
 
  ``` 
-  
+
 Endpoints:  
 - VictoriMametrics: http://< lb >/api/v1/write  
 - Application serves: http:< lb >/backend  
 - Application's metrics: http:< lb >/backend_metrics  
+
+Note: The script takes care of updating remote_write endpoint in prometehus.yaml
   
 ###  Room for improvements There is scope of improvements as this the first draft.   
 Something to think of:  
-1. Metric label value for db's: dbQuerySuccess("host": "db", "status": "failure"). We can further optimised to retrieve the "host" value as the IP where the db is running. It will be in fact give better insights on system resources and how much it needs and where the application is running in determining to scale that node or pods etc.  
+1. Metric label value for db's: dbQuerySuccess("host": "db", "status": "failure"). We can further optimise to retrieve the "host" value as the IP where the db is running. It will in fact give better insights on system resources and how much it needs and where the application is running in determining to scale that node or pods etc.  
 2. Could add a metric to measure how much time it take to prepare a DB? Since the application seems to prepare db first and then proceed with server calls. A early detection of DB failure.   
 3. One can improve this application further, like traking the request information or maintaining the can help understanding who are our users. Having a different endpoint for metrics listening at different port to avoid congestion (thought of this bit late. ).  
-4. Better handling of status codes(2XX,5XX,3XX) and emitting as metrics. This can significantly help in understanding the availability of there service by tracking number_of_bad_requests/total_requests in X time window. Can help in grabbing in quick attention to look at performance or issues, and deciding the priorities of what work on.   
+4. Better handling of status codes(2XX,5XX,3XX) and emitting as metrics. This can significantly help in understanding the availability of there service by tracking number_of_bad_requests/total_requests in X time window. Can help in grabbing in quick attention to look at performance or issues, and deciding the priorities of what work on. 
+5. More control over CPU and RAM resource limits, for the sake of testing I have commented it out.   
   
 ...to be continued in thinking brain encountered 5xx

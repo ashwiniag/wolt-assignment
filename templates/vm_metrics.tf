@@ -62,11 +62,6 @@ variable "victoriametrics_search_max_uniq_timeseries" {
   type    = string
 }
 
-variable "victoriametrics_availability_zone_affinity" {
-  default = "ap-south-1a"
-  type    = string
-}
-
 # -------------------resources--------------
 
 resource "kubernetes_namespace" "vm_metrics" {
@@ -128,14 +123,8 @@ resource "kubernetes_deployment" "vm_metrics" {
           port {
             name           = "metric"
             container_port = var.victoriametrics.port
-            protocol       = "TCP" //*
+            protocol       = "TCP"
           }
-
-//          port {
-//            name           = "sending"
-//            container_port = "80"
-//            protocol       = "TCP"
-//          }
         }
       }
     }

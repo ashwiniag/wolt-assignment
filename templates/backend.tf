@@ -14,6 +14,10 @@ variable "backend_app" {
   default = {
     port                = "8000"
     count               = "1"
+//    request_cpu       = "100m"
+//    request_ram       = "300Mi"
+//    limit_cpu         = "200m"
+//    limit_ram         = "400Mi"
   }
 }
 
@@ -65,9 +69,18 @@ resource "kubernetes_deployment" "backend_app" {
           image             = "024662722948.dkr.ecr.ap-south-1.amazonaws.com/alice-application" //*
           name              = local.backeend_name
           image_pull_policy = "Always"
-
-//          args = [
-//          ]
+          // For testing scope disabling this.
+//          resources {
+//            requests = {
+//              cpu               = var.backend_app.request_cpu
+//              memory            = var.backend_app.request_ram
+//            }
+//
+//            limits = {
+//              cpu               = var.backend_app.limit_cpu
+//              memory            = var.backend_app.limit_ram
+//            }
+//          }
 
           env {
             name  = "DB_HOST"
