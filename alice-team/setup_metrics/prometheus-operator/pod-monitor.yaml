@@ -11,7 +11,7 @@ spec:
     any: true
   selector:
     matchExpressions:
-# custom labels maybe like wolt = true key for all, test it
+# custom labels maybe like wolt = true key for all to detect, test it
     - {key: wolt, operator: Exists}
   podMetricsEndpoints:
     - port: metrics

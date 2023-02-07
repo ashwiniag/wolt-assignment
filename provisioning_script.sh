@@ -3,18 +3,22 @@
 set -euo pipefail
 set -x
 
+# Caution: This script can further be enhanced. The aim was to use script for
+# quick local testing purpose.
+
 current_dir=$PWD
 
-usage="(Not an idempotent script - draft1) run => provisioning_script.sh plan|apply|delete."
+usage="(version1) run => provisioning_script.sh apply|delete."
 
 declare -r command=${1:?}
 
 function check_aws_profile() {
+	# To detect aws profile to use.
 	if [ -z "$(aws sts get-caller-identity)" ]; then echo "ERROR: export AWS_PROFILE"; else echo "aws aws profile found proceeding to artefact_build_upload"; fi
 }
 
 function artefact_build_upload() {
-	# In directory  nginx-golang-mysql
+	# In directory  nginx-golang-mysql, Dockerizes the application and uploads in AWS ECR through aws cli
 	if [ -z "$(aws ecr describe-repositories | jq '.repositories[].repositoryName' | grep -o "alice-application")" ]; then
 		repositoryUri=$(aws ecr create-repository --repository-name alice-application --region ap-south-1 | jq '.repository.repositoryUri' | tr -d '"')
 	fi
@@ -29,8 +33,9 @@ function artefact_build_upload() {
 
 
 function backend_s3_tf() {
-	# In directory  tfstate_setup
-	if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep -o "wolt-assignment-alice-team")" ]; then
+	# In directory  tfstate_setup, creates S3 and dynamodb to store terraform statefiles and takes care of state locking.
+	# if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep "wolt-assignment-alice-team")" ] && [ "$(aws dynamodb describe-table --table-name tfstate &> /dev/null; echo $?)" -ne 0 ]; then
+	if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep -o "wolt-assignment-alice-team")" && "$(aws dynamodb describe-table --table-name tfstate)" ]; then
 		cd $current_dir/tfstate_setup/
 		terraform init
 		terraform apply -auto-approve
@@ -42,7 +47,7 @@ function backend_s3_tf() {
 }
 
 function all_layers() {
-	# In directory  tfstate_setup if apply or delete
+	# In directory  tfstate_setup,  provisions complete stack in layers.
 	cd $current_dir/alice-team/infra
 	echo yes | make apply
 
@@ -61,6 +66,12 @@ function all_layers() {
 	cd $current_dir/alice-team/setup_metrics/prometheus-operator
 	make kubeconfig
 	make apply
+
+	# Updates URL of the LB in prometheus.yaml file for remote_write to Victoriamterics endpoint.
+	echo "Updating remote_write endpoint in prometheus.yaml, verify once"
+	cd $current_dir/alice-team/setup_metrics/prometheus-operator
+  URL=$(kubectl get svc -n default -o json | jq '.items[].status.loadBalancer.ingress[0].hostname' | head -n 1)
+	sed -i -E "s/url:.*/url: $URL\/api\/v1\/write\//" prometheus.yaml
 }
 
 function delete_all_provisioned() {
@@ -73,11 +84,11 @@ function delete_all_provisioned() {
 	make kubeconfig
 	make destroy
 
-	cd $current_dir/alice-team/resources
+	cd $current_dir/alice-team/services_k8s
 	make kubeconfig
 	echo yes | make destroy
 
-	cd $current_dir/alice-team/services_k8s
+	cd $current_dir/alice-team/resources
 	make kubeconfig
 	echo yes | make destroy
 

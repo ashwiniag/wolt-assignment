@@ -2,6 +2,8 @@ eks_cluster_name := alice-saitama-dragon
 region := ap-south-1
 kubeconfig_dir := /tmp/kubeconfig
 
+## To be able to fetch Cluster metrics.
+
 create_kubeconfig_dir:
 	mkdir -p ${kubeconfig_dir}
 
