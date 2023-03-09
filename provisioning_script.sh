@@ -34,8 +34,8 @@ function artefact_build_upload() {
 
 function backend_s3_tf() {
 	# In directory  tfstate_setup, creates S3 and dynamodb to store terraform statefiles and takes care of state locking.
-	# if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep "wolt-assignment-alice-team")" ] && [ "$(aws dynamodb describe-table --table-name tfstate &> /dev/null; echo $?)" -ne 0 ]; then
-	if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep -o "wolt-assignment-alice-team")" && "$(aws dynamodb describe-table --table-name tfstate)" ]; then
+  if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep "wolt-assignment-alice-team")" ] && [ "$(aws dynamodb describe-table --table-name tfstate &> /dev/null; echo $?)" -ne 0 ]; then
+	#if [ -z "$(aws s3api list-buckets | jq '.Buckets[].Name' | grep -o "wolt-assignment-alice-team")" && "$(aws dynamodb describe-table --table-name tfstate)" ]; then
 		cd $current_dir/tfstate_setup/
 		terraform init
 		terraform apply -auto-approve
