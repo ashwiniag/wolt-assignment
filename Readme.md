@@ -73,7 +73,7 @@ The storage for the application consists of a deployed VictoriaMetrics pod. Metr
   
 Docker image is build locally and upload in ECR.   
     
-### Architecture diagram ![Diagram](https://github.com/ashwiniag/wolt-assignment/blob/main/Alice-architecture-1.png?raw=true)    
+### Architecture diagram ![Diagram](https://github.com/ashwiniag/wolt-assignment/blob/main/Alice-architecture.png?raw=true)    
     
     
 ### Provisioning: How to use the scripts to implement.   
